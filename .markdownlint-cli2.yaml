@@ -1,0 +1,30 @@
+# Configuration M-CORE Standard v1.0
+# Ce fichier définit les règles de structure pour toute l'organisation.
+
+config:
+  # Règle par défaut : Tout est activé
+  default: true
+  
+  # MD013 (Line length) : Désactivé car nous éditons sur mobile
+  # et le wrapping automatique est géré par les éditeurs (Obsidian).
+  MD013: false
+  
+  # MD033 (Inline HTML) : Autorisé pour permettre HTMX/Alpine.js 
+  # dans les documentations interactives.
+  MD033: false
+  
+  # MD041 (First line should be a top-level heading) : Activé
+  # Chaque document DOIT commencer par un titre H1 (# Titre).
+  MD041: true
+
+  # MD007 (Unordered list indentation) : 2 espaces pour la lisibilité
+  MD007:
+    indent: 2
+
+# Fichiers à ignorer (ex: dossiers de build ou dépendances)
+globs:
+  - "**/*.md"
+ignores:
+  - "node_modules"
+  - ".git"
+  - "target"
