@@ -1,0 +1,131 @@
+version: '3'
+
+# ===================================================================
+# ABSTRACTION LAYER : GESTIONNAIRE DE PAQUETS MULTI-OS
+# Destine a etre inclus dans le taskfile principal
+# ===================================================================
+
+vars:
+  # Detection dynamique du moteur de paquets
+  PKG_ENGINE:
+    sh: |
+      if [ "$OS" = "Windows_NT" ]; then
+        if command -v scoop >/dev/null 2>&1; then echo "scoop"; else echo "winget"; fi
+      elif [ -d "/data/data/com/termux" ]; then echo "termux";
+      elif command -v brew >/dev/null 2>&1; then echo "brew";
+      elif command -v apt-get >dev/null 2>&1; then echo "apt";
+      else echo "unsupported"; fi
+
+
+tasks:
+  # --- INTERFACES PUBLICS ---
+
+  # -----------------------------------------------------------------------
+  install:
+    desc: "Install un paquet (Usage: task pkg:install PKG=nom_du_paquet)"
+    requires: { vars: [PKG] }
+    cmds:
+      - task: _log
+        vars: { MSG: "[ALERTE] - Tentative d'installation de {{.PKG}} via {{PKG_ENGINE}}." }
+      - task: "exec-{{.PKG_ENGINE}}"
+        vars: { ACTION: "install", PKG: "{{.PKG}}" }
+      - task: _log
+        vars: { MSG: "[SUCCESS] - {{.PKG}} installer depuis {{PKG_ENGINE}}." }
+    status:
+      - "command -v {{.PKG}} >/dev/null 2>&1"
+    on_error:
+      - task: _log
+        vars: { MSG: "[ECHEC] - Installation de {{.PKG}} depuis {{PKG_ENGINE}} echouer." }
+
+
+  # -----------------------------------------------------------------------
+  update:
+    desc: "Met a jour un paquet (Usage: task pkg:update PKG=nom_du_paquet)"
+    requires: { vars: [PKG] }
+    cmds:
+      - task: "exec-{{.PKG_ENGINE}}"
+        vars: { ACTION: "update", PKG: "{{.PKG}}" }
+
+
+  # -----------------------------------------------------------------------
+  remove:
+    desc: "Supprime un paquet (Usage: task pkg:remove PKG=nom_du_paquet)"
+    requires: { vars: [PKG] }
+    cmds:
+      - task: "exec-{{.PKG_ENGINE}}"
+        vars: { ACTION: "remove", PKG: "{{.PKG}}" }
+
+
+  # ==================================================================================
+  # LOGIQUE D'EXECUTION PAR OS (INTERNE)
+  # ==================================================================================
+
+  # -----------------------------------------------------------------------
+  _log:
+    internal: true
+    vars:
+      TIMESTAMP: { sh: "date '+%Y-%m-%d %H:%M:%S'" }
+    cmds:
+      - |
+        {{if eq OS "windows"}}
+        powershell -Command "Add-Content -Path {{.LOG_FILE}} -Value '{{TIMESTAMP}} [INFO] {{.MSG}}'"
+        {{else}}
+        echo "{{.TIMESTAMP}} [INFO] {{.MSG}}" >> {{.LOG_FILE}}
+        {{end}}
+      - echo "{{.MSG}}"
+
+  # -----------------------------------------------------------------------
+  exec-scoop:
+    internal: true
+    cmds:
+      - |
+        {{if eq .ACTION "install"}} scoop install {{.PKG}}
+        {{else if eq .ACTION "update"}} scoop update {{.PKG}}
+        {{else if eq .ACTION "remove"}} scoop uninstall {{.PKG}} {{end}}
+
+
+  # -----------------------------------------------------------------------
+  exec-winget:
+    internal: true
+    cmds:
+      - |
+        {{if eq .ACTION "install"}} winget install {{.PKG}} --exact --silent
+        {{else if eq .ACTION "update"}} winget upgrade {{.PKG}}
+        {{else if eq .ACTION "remove"}} winget uninstall {{.PKG}} {{end}}
+
+
+  # -----------------------------------------------------------------------
+  exec-brew:
+    internal: true
+    cmds:
+      - |
+        {{if eq .ACTION "install"}} brew install {{.PKG}} --exact --silent
+        {{else if eq .ACTION "update"}} brew upgrade {{.PKG}}
+        {{else if eq .ACTION "remove"}} brew uninstall {{.PKG}} {{end}}
+
+
+  # -----------------------------------------------------------------------
+  exec-apt:
+    internal: true
+    cmds:
+      - |
+        {{if eq .ACTION "install"}} sudo apt-get update && sudo apt-get install -y {{.PKG}}
+        {{else if eq .ACTION "update"}} sudo apt-get install --only-upgrade {{.PKG}}
+        {{else if eq .ACTION "remove"}} sudo apt-get remove -y {{.PKG}} {{end}}
+
+
+  # -----------------------------------------------------------------------
+  exec-termux:
+    internal: true
+    cmds:
+      - |
+        {{if eq .ACTION "install"}} pkg install -y {{.PKG}}
+        {{else if eq .ACTION "update"}} pkg upgrade -y {{.PKG}}
+        {{else if eq .ACTION "remove"}} pkg uninstall -y {{.PKG}} {{end}}
+
+
+  # -----------------------------------------------------------------------
+  exec-unsupported:
+    internal: true
+    cmds:
+      - echo "Error: OS or Package Manager unsupported !" && exit 1

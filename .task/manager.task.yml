@@ -1,0 +1,64 @@
+version: '3'
+
+tasks:
+  diagnostic:
+    desc: "Affiche un tableau récapitulatif des versions des outils installés"
+    vars:
+      # On capture la sortie standard (stdout) de chaque tâche 'check'
+      RUST_VER:  { sh: "task rust:check",  ignore_error: true }
+      GO_VER:    { sh: "task go:check",    ignore_error: true }
+      ZOLA_VER:  { sh: "task zola:check",  ignore_error: true }
+      TYPST_VER: { sh: "task typst:check", ignore_error: true }
+      VALE_VER:  { sh: "task vale:check",  ignore_error: true }
+      RUMDL_VER: { sh: "task rumdl:check", ignore_error: true }
+    cmds:
+      - |
+        echo "| Outil | Version Détectée | Status |"
+        echo "| :--- | :--- | :--- |"
+        echo "| **Rust** | {{.RUST_VER}} | {{if contains "NON" .RUST_VER}}❌{{else}}✅{{end}} |"
+        echo "| **Go** | {{.GO_VER}} | {{if contains "NON" .GO_VER}}❌{{else}}✅{{end}} |"
+        echo "| **Zola** | {{.ZOLA_VER}} | {{if contains "NON" .ZOLA_VER}}❌{{else}}✅{{end}} |"
+        echo "| **Typst** | {{.TYPST_VER}} | {{if contains "NON" .TYPST_VER}}❌{{else}}✅{{end}} |"
+        echo "| **Vale** | {{.VALE_VER}} | {{if contains "NON" .VALE_VER}}❌{{else}}✅{{end}} |"
+        echo "| **Rumdl** | {{.RUMDL_VER}} | {{if contains "NON" .RUMDL_VER}}❌{{else}}✅{{end}} |"
+    silent: true
+
+
+  ensure-scoop:
+    internal: true
+    platforms: [windows]
+    cmds:
+      - powershell -Command "if (!(Get-Command scoop -ErrorAction SilentlyContinue)) { iwr -useb get.scoop.sh | iex }"
+    silent: true
+
+
+  refresh-pkg-manager:
+    desc: "Mise à jour des gestionnaires"
+    cmds:
+      - |
+        {{if eq OS "windows"}}
+          task: ensure-scoop
+          scoop update
+        {{else if eq OS "darwin"}}
+          brew update
+        {{else}}
+          sudo apt-get update -y
+        {{end}}
+    silent: true
+
+
+  install-missing:
+    internal: true
+    desc: "Boucle d'installation intelligente"
+    cmds:
+      # On appelle chaque tâche de check.
+      # Grâce à la directive 'status' dans les fichiers tools,
+      # l'installation ne se lancera QUE si l'outil est absent.
+      - task: refresh-pkg-manager
+      - task: rust:install
+      - task: go:install
+      - task: zola:install
+      - task: typst:install
+      - task: vale:install
+      - task: rumdl:install
+    silent: true

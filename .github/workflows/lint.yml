@@ -1,0 +1,38 @@
+# .github/workflows/lint.yml
+name: "M-CORE Quality Gates"
+
+on:
+  push:
+    branches: [ "main", "drift" ]
+  pull_request:
+    branches: [ "main", "drift" ]
+
+jobs:
+  lint-markdown:
+    name: Validate Markdown Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Markdownlint
+        run: npm install -g markdownlint-cli2
+
+      - name: Run Linting
+        # Utilise votre fichier .markdownlint-cli2.yaml automatiquement
+        run: markdownlint-cli2 "**/*.md"
+
+  lint-style:
+    name: Validate Technical Prose (Vale)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Vale
+        uses: errata-ai/vale-action@v2
+        with:
+          # Utilise votre .vale.ini du dépôt
+          files: .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

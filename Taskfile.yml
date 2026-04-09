@@ -1,0 +1,47 @@
+version: '3'
+
+# Definition des variables
+vars:
+  PROJECT_NAME: "M-CORE"
+  BIN_DIR: "dist/bin"
+  ENGINE_DIR: "m-core/engine"
+  FORCE: '{{default "0" .FORCE}}'
+  TASK_EXE: '{{if eq .OS "windows"}}task.exe{{else}}task{{end}}'
+
+
+
+# Inclusion dynamique des domaines
+includes:
+  # --- Le gestionnaire des services task ---
+  manage: .task/manager.task.yml
+
+  # --- Le gestionnaire de cycle de vie des paquets et outils de l'ecosysteme ---
+  pkg: .task/package_manager.task.yml
+
+
+
+
+# Definition des taches et commandes
+tasks:
+  default:
+    cmds:
+      - task --list
+
+  # ----------------------------------------------------------------------------------
+  init:
+    desc: "Initialisation et test de l'écosystème d'orchestration"
+    cmds:
+      - echo "--- Démarrage du test système M-CORE ---"
+      - task: manage:diagnostic
+      - echo "--- Environnement prêt ---"
+    silent: true
+
+
+  # ----------------------------------------------------------------------------------
+  setup:
+    desc: "Configuration de l'ecosysteme numerique"
+    cmds:
+      - task: pkg:install
+        vars: { PKG: "go" }
+      - task: pkg:install
+        vars: { PKG: "git" }
