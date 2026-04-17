@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://m-core.engineering",
+  "title": "M-CORE Project Descriptor",
+  "type": "object",
+ "required": ["version", "project", "remotes"],
+  "if": {
+    "properties": { "project": { "properties": { "topology": { "const": "composite" } } } }
+  },
+  "then": {
+    "required": ["modules"]
+  },
+  "else": {
+    "not": { "required": ["modules"] } 
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "string", "pattern": "^[0-9]+$" },
+    "project": {
+      "type": "object",
+      "required": ["name", "owner", "owner_type", "topology", "vcs_driver", "hierarchy"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 2 },
+        "owner": { "type": "string" },
+        "owner_type": { "type": "string", "enum": ["org", "user"] },
+        "topology": { "type": "string", "enum": ["composite", "standalone"] },
+        "vcs_driver": { "type": "string", "enum": ["git", "gh-cli", "gl-cli"] },
+        "hierarchy": {
+          "type": "object",
+          "required": ["is_root"],
+          "additionalProperties": false,
+          "properties": {
+            "is_root": { "type": "boolean" },
+            "parent_name": { "type": "string" },
+            "parent_path": { "type": "string", "default": "../" }
+          }
+        }
+      }
+    },
+    "remotes": {
+      "type": "object",
+      "required": ["provider", "protocol"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string", "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$" },
+        "protocol": { "type": "string", "enum": ["https", "ssh"] }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["name", "path", "visibility"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string", "pattern": "^\\./" },
+          "visibility": { "type": "string", "enum": ["public", "private"] },
+          "repo_alias": { "type": "string" }
+        }
+      }
+    }
+  }
+}

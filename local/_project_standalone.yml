@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../schema/project.schema.json
+# M-CORE Project Descriptor (Standalone)
+version: "1"
+project:
+  name: "MY_SINGLE_PROJECT"
+  owner: "USER_NAME"
+  owner_type: "user"
+  topology: "standalone"
+  vcs_driver: "git"
+  hierarchy:
+    is_root: false  # or true if is root mono repo
+    parent_name: "REPO_PARENT_NAME"
+    parent_path: "REPO_PARENT_PATH" # default: ../    
+remotes:
+  provider: "github.com"
+  protocol: "https"
