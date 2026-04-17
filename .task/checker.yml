@@ -1,0 +1,9 @@
+version: '3'
+
+tasks:
+  check:
+    desc: "Valide la conformité du descripteur project.mcore.yml"
+    cmds:
+      # On appelle le binaire compilé par engine
+      - '{{.TARGET_DIR}}/{{.HELPER_BIN_NAME}} validate --schema ./schema/project.schema.json --target ../project.mcore.yml'
+    silent: true

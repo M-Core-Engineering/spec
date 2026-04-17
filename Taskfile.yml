@@ -1,1 +1,33 @@
+# yaml-language-server: $schema=https://taskfile.dev
 version: '3'
+
+# dotenv: 
+#   - '.env'
+
+vars:
+  # Variables internes au module engine
+  EXE: '{{if eq OS "windows"}}.exe{{else}}{{end}}'
+  HELPER_BIN_NAME: 'mcore-helper{{.EXE}}'
+  # On remonte vers la racine du projet pour atteindre .task/bin
+  TARGET_DIR: '../.task/bin'
+
+
+includes:
+  checker:
+    taskfile: ./.task/checker.yml
+    dir: .
+    internal: true
+    optional: true
+
+
+tasks:
+  check:
+    desc: "Valide la conformité du descripteur project.mcore.yml"
+    cmds:
+      - task: checker:check
+
+  
+  test:
+    desc: "Exécute les tests unitaires du moteur"
+    cmds:
+      - task: tester:test

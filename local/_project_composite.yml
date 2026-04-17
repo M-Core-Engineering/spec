@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../schema/project.schema.json
+# M-CORE Project Descriptor (Composite)
+version: "1"
+project:
+  name: "MY_COMPOSITE_PROJECT"
+  owner: "ORG_NAME"
+  owner_type: "org"
+  topology: "composite"
+  vcs_driver: "git"
+  hierarchy:
+    is_root: true  # or false if is intermediant modulary repo
+    parent_name: ""
+    parent_path: ""
+remotes:
+  provider: "github.com"
+  protocol: "https"
+modules:
+  - name: "module-alpha"
+    path: "./module-alpha"
+    visibility: "private"
